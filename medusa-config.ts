@@ -24,4 +24,7 @@ module.exports = defineConfig({
       },
     },
   ],
+  admin: {
+    disable: true,
+  },
 });
