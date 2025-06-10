@@ -46,7 +46,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:-medusa}@postgres:5432/${POSTGRES_DB:-medusa}?sslmode=disable
+      DATABASE_URL: postgresql://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:-medusa}@postgres:5432/${POSTGRES_DB:-medusa}?ssl_mode=disable
       REDIS_URL: redis://redis:6379
       NODE_ENV: ${NODE_ENV:-production}
       JWT_SECRET: ${JWT_SECRET}
