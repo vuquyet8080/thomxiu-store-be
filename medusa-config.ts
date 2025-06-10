@@ -30,6 +30,7 @@ module.exports = defineConfig({
     },
   ],
   admin: {
-    disable: false,
+    disable: process.env.MEDUSA_ADMIN_DISABLE === "true",
+    path: "/admin",
   },
 });
