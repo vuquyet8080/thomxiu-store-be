@@ -13,7 +13,7 @@
     "medusa"
   ],
   "scripts": {
-    "build": "medusa build",
+    "build": "medusa build && ln -s .medusa/server/public/ public",
     "build:all": "medusa build && medusa build --admin-only",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "npx medusa db:migrate && medusa start",
