@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "build": "medusa build",
+    "build:all": "medusa build && medusa build --admin-only",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "npx medusa db:migrate && medusa start",
     "dev": "medusa develop",
@@ -21,7 +22,8 @@
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "migrate": "npx medusa db:migrate && yarn seed",
-    "create-account": "npx medusa user --email admin@gmail.com --password Password1234@"
+    "create-account": "npx medusa user --email admin@gmail.com --password Password1234@",
+    "build:admin": "medusa build --admin-only"
   },
   "dependencies": {
     "@medusajs/admin": "^7.1.18",
