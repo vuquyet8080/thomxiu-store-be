@@ -53,7 +53,7 @@ services:
       STORE_CORS: ${STORE_CORS:-http://localhost:8000,https://docs.medusajs.com}
       ADMIN_CORS: ${ADMIN_CORS:-http://localhost:5173,http://localhost:9000,https://docs.medusajs.com}
       AUTH_CORS: ${AUTH_CORS:-http://localhost:5173,http://localhost:9000,http://localhost:8000,https://docs.medusajs.com}
-      MEDUSA_ADMIN_DISABLE: false
+      MEDUSA_ADMIN_DISABLE: true
     ports:
       - "${PORT:-9000}:9000"
 
