@@ -10,8 +10,7 @@ module.exports = defineConfig({
     http: {
       storeCors: process.env.STORE_CORS || "http://localhost:8000",
       adminCors:
-        "http://localhost:5173,http://localhost:9000,https://docs.medusajs.com,https://thomxiu-store-be.vercel.app",
-
+        process.env.ADMIN_CORS || "https://thomxiu-store-be.vercel.app",
       authCors: process.env.AUTH_CORS || "http://localhost:5173",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
