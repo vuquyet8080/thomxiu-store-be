@@ -56,6 +56,17 @@ services:
       MEDUSA_ADMIN_DISABLE: true
     ports:
       - "${PORT:-9000}:9000"
+  nginx:
+    image: nginx:alpine
+    container_name: medusa-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
 volumes:
   postgres_data:
