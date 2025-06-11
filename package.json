@@ -23,7 +23,7 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "migrate": "npx medusa db:migrate && yarn seed",
     "create-account": "npx medusa user --email admin@gmail.com --password Password1234@",
-    "build:admin": "medusa build --admin-only"
+    "build:admin": "MEDUSA_BACKEND_URL=http://localhost:9000 yarn medusa build --admin-only"
   },
   "dependencies": {
     "@medusajs/admin": "^7.1.18",
