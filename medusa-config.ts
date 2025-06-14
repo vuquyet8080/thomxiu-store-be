@@ -33,12 +33,13 @@ module.exports = defineConfig({
       resolve: "medusa-file-local",
       options: {
         upload_dir: "uploads",
+        backend_url: process.env.MEDUSA_BACKEND_URL + "/static",
       },
     },
   ],
   admin: {
     disable: process.env.MEDUSA_ADMIN_DISABLE === "true",
-    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+    backendUrl: process.env.MEDUSA_BACKEND_URL,
     path: process.env.MEDUSA_ADMIN_DISABLE === "true" ? "/" : "/app",
   },
 });
