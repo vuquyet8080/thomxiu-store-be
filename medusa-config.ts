@@ -1,4 +1,4 @@
-import { loadEnv, defineConfig } from "@medusajs/framework/utils";
+import { loadEnv, defineConfig, Modules } from "@medusajs/framework/utils";
 
 // Uncomment to load environment variables
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
@@ -29,17 +29,32 @@ module.exports = defineConfig({
         autoRebuild: true,
       },
     },
-    {
-      resolve: `@medusajs/file-local`,
-      options: {
-        upload_dir: "uploads",
-        backend_url: "http://admin.thomxiu.vn//static",
-      },
-    },
   ],
   admin: {
     disable: process.env.MEDUSA_ADMIN_DISABLE === "true",
     backendUrl: process.env.MEDUSA_BACKEND_URL,
     path: process.env.MEDUSA_ADMIN_DISABLE === "true" ? "/" : "/app",
   },
+  modules: [
+    {
+      resolve: "@medusajs/medusa/file",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/file-s3",
+            id: "s3",
+            options: {
+              file_url: process.env.S3_FILE_URL,
+              access_key_id: process.env.S3_ACCESS_KEY_ID,
+              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+              region: process.env.S3_REGION,
+              bucket: process.env.S3_BUCKET,
+              endpoint: process.env.S3_ENDPOINT,
+              // other options...
+            },
+          },
+        ],
+      },
+    },
+  ],
 });
