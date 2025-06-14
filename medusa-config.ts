@@ -29,6 +29,12 @@ module.exports = defineConfig({
         autoRebuild: true,
       },
     },
+    {
+      resolve: "medusa-file-local",
+      options: {
+        upload_dir: "uploads",
+      },
+    },
   ],
   admin: {
     disable: process.env.MEDUSA_ADMIN_DISABLE === "true",

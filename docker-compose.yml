@@ -58,6 +58,8 @@ services:
       MEDUSA_WEBHOOK_SECRET: ${MEDUSA_WEBHOOK_SECRET}
     ports:
       - "${PORT:-9000}:9000"
+    volumes:
+      - ./uploads:/app/uploads
   nginx:
     image: nginx:alpine
     container_name: medusa-nginx
@@ -67,9 +69,9 @@ services:
     ports:
       - "443:443"
     volumes:
+      - ./uploads:/app/uploads:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt:/etc/letsencrypt:ro
-
 volumes:
   postgres_data:
   redis_data:

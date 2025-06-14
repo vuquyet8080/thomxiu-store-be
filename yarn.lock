@@ -1348,7 +1348,7 @@
     "@babel/traverse" "^7.25.9"
     globals "^11.1.0"
 
-"@babel/plugin-transform-classes@^7.27.1":
+"@babel/plugin-transform-classes@^7.15.4", "@babel/plugin-transform-classes@^7.27.1":
   version "7.27.1"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-classes/-/plugin-transform-classes-7.27.1.tgz#03bb04bea2c7b2f711f0db7304a8da46a85cced4"
   integrity sha512-7iLhfFAubmpeJe/Wo2TVuDrykh/zlWXLzPNdL0Jqn/Xu8R3QQ8h9ff8FQoISZOsw74/HFqFI7NX63HN7QFIHKA==
@@ -11495,7 +11495,7 @@ express@4.18.2:
     utils-merge "1.0.1"
     vary "~1.1.2"
 
-express@^4.17.3, express@^4.21.0:
+express@^4.17.1, express@^4.17.3, express@^4.21.0:
   version "4.21.2"
   resolved "https://registry.yarnpkg.com/express/-/express-4.21.2.tgz#cf250e48362174ead6cea4a566abef0162c1ec32"
   integrity sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==
@@ -13602,12 +13602,22 @@ media-typer@0.3.0:
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"
   integrity sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==
 
-medusa-core-utils@1.2.3:
+medusa-core-utils@1.2.3, medusa-core-utils@^1.1.30:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/medusa-core-utils/-/medusa-core-utils-1.2.3.tgz#d6f327c771868122721c470d2f5be3551bdf6f6e"
   integrity sha512-mNUqWh8G7BF9dcxt3t22GtSJrm4pfpU98QzvNgpqAvirVbBI4lOCpDQGoKE+jMHOLQJHrLQFoSJeqcofDJvEgA==
   dependencies:
     awilix "^8.0.0"
+
+medusa-file-local@^2.0.9:
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/medusa-file-local/-/medusa-file-local-2.0.9.tgz#956acfb28ae21920b8806ddb4d47d856ce9ac3fc"
+  integrity sha512-WqpNiyPnSRMVDEOc3d2gQwQEHZs53QkTNrx+3UBKuX2V8WWPVyj9mhXu4Vfj+AJLuU6qI8SAPmD/oD41E09vzA==
+  dependencies:
+    "@babel/plugin-transform-classes" "^7.15.4"
+    cors "^2.8.5"
+    express "^4.17.1"
+    medusa-core-utils "^1.1.30"
 
 medusa-react@^9.0.18:
   version "9.0.18"
