@@ -1,4 +1,4 @@
-const WEBHOOK_URL = process.env.CLIENT_WEBHOOK_URL;
+const WEBHOOK_URL = process.env.CLIENT_WEBHOOK_URL || "";
 const WEBHOOK_SECRET = process.env.MEDUSA_WEBHOOK_SECRET;
 
 export async function sendWebhook(event: string, data: any) {
