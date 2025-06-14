@@ -33,7 +33,7 @@ module.exports = defineConfig({
       resolve: `@medusajs/file-local`,
       options: {
         upload_dir: "uploads",
-        backend_url: process.env.MEDUSA_BACKEND_URL + "/static",
+        backend_url: "http://admin.thomxiu.vn//static",
       },
     },
   ],
@@ -41,14 +41,5 @@ module.exports = defineConfig({
     disable: process.env.MEDUSA_ADMIN_DISABLE === "true",
     backendUrl: process.env.MEDUSA_BACKEND_URL,
     path: process.env.MEDUSA_ADMIN_DISABLE === "true" ? "/" : "/app",
-  },
-  modules: {
-    file: {
-      resolve: "@medusajs/file-local",
-      options: {
-        upload_dir: "uploads",
-        backend_url: process.env.MEDUSA_BACKEND_URL + "/static",
-      },
-    },
   },
 });
