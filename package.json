@@ -37,7 +37,9 @@
     "@mikro-orm/knex": "6.4.3",
     "@mikro-orm/migrations": "6.4.3",
     "@mikro-orm/postgresql": "6.4.3",
+    "@payos/node": "^1.0.10",
     "awilix": "^8.0.1",
+    "crypto": "^1.0.1",
     "medusa-file-local": "^2.0.9",
     "medusa-file-s3": "^1.4.2",
     "pg": "^8.13.0"
