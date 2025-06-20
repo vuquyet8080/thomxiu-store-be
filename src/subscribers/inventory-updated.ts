@@ -2,7 +2,7 @@ import {
   type SubscriberArgs,
   type SubscriberConfig,
 } from "@medusajs/framework";
-import { sendWebhook } from "./webhook-utils";
+import { sendWebhook } from "../utils/webhook-utils";
 
 export default async function inventoryItemUpdatedHandler({
   event: { data },

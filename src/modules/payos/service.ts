@@ -12,11 +12,11 @@ import {
   InitiatePaymentInput,
   InitiatePaymentOutput,
   Logger,
-  ProviderWebhookPayload,
   RefundPaymentInput,
   RefundPaymentOutput,
   RetrievePaymentInput,
   RetrievePaymentOutput,
+  StoreCartResponse,
   UpdatePaymentInput,
   UpdatePaymentOutput,
   WebhookActionResult,
@@ -24,9 +24,11 @@ import {
 import { AbstractPaymentProvider } from "@medusajs/framework/utils";
 import PayOS from "@payos/node";
 import { getSmallestUnit } from "../../utils";
+import { EntityManager } from "@mikro-orm/core";
 
 type InjectedDependencies = {
   logger: Logger;
+  manager: EntityManager; // 👈 thêm dòng này
 };
 type PayOSOptions = {
   clientId: string;
@@ -37,6 +39,10 @@ type PayOSOptions = {
 };
 
 class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
+  static isInstant = false;
+
+  protected manager: EntityManager;
+
   protected logger_: Logger;
   protected readonly options_: PayOSOptions;
   protected payOS_: PayOS;
@@ -47,9 +53,9 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     super(container, options);
 
     this.logger_ = container.logger;
+
     this.options_ = options;
 
-    // Initialize PayOS client
     this.payOS_ = new PayOS(
       this.options_.clientId,
       this.options_.apiKey,
@@ -61,53 +67,43 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     input: InitiatePaymentInput
   ): Promise<InitiatePaymentOutput> {
     try {
-      const { amount, currency_code, context, data } = input;
+      console.log("initiatePayment>>>", input);
+      const { amount, currency_code, data } = input;
 
-      // Convert amount to smallest unit (VND doesn't use decimal places)
       const paymentAmount = getSmallestUnit(amount, currency_code);
 
       // Use order display_id as orderCode for PayOS
       const orderCode = Math.floor(Math.random() * Date.now());
 
-      const order = data?.order as {
-        items: Array<{
-          name: string;
-          quantity: number;
-          price: number;
-        }>;
-      };
-
-      if (!order) {
-        throw new Error("Order data is missing");
-      }
-      const orderItems = order.items;
-
       const requestData = {
         orderCode,
         amount: paymentAmount,
         description: `THOMXIU${orderCode}`,
-        items: orderItems?.map((item: any) => ({
-          name: item.title,
-          quantity: item.quantity,
-          price: getSmallestUnit(item.unit_price, currency_code),
-        })),
         cancelUrl: this.options_.cancelUrl,
         returnUrl: this.options_.returnUrl,
-        buyerName: `${context?.customer?.first_name} ${context?.customer?.last_name}`,
-        buyerEmail: context?.customer?.email ?? "",
-        buyerPhone: context?.customer?.phone ?? "",
       };
 
-      const paymentLinkData = await this.payOS_.createPaymentLink(requestData);
+      console.log("requestData", requestData);
+
+      const paymentLinkData = await this.payOS_.createPaymentLink(
+        requestData as any
+      );
 
       return {
-        id: paymentLinkData.paymentLinkId,
+        id: data?.session_id as string,
         data: {
           paymentLinkId: paymentLinkData.paymentLinkId,
           orderCode: paymentLinkData.orderCode,
           checkoutUrl: paymentLinkData.checkoutUrl,
           qrCode: paymentLinkData.qrCode,
           status: paymentLinkData.status,
+          bin: paymentLinkData.bin,
+          accountNumber: paymentLinkData.accountNumber,
+          accountName: paymentLinkData.accountName,
+          amount: paymentLinkData.amount,
+          description: paymentLinkData.description,
+          currency: paymentLinkData.currency,
+          sessionId: data?.session_id,
         },
       };
     } catch (error) {
@@ -120,35 +116,31 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     input: AuthorizePaymentInput
   ): Promise<AuthorizePaymentOutput> {
     try {
-      const paymentLinkId = input.data?.id as string;
-      if (!paymentLinkId) {
-        throw new Error("PaymentLinkId is required");
-      }
+      console.log("authorizePayment>>>", input);
+      const paymentLinkId = input.data?.paymentLinkId as string;
 
       // Get payment information from PayOS
       const paymentInfo = await this.payOS_.getPaymentLinkInformation(
         paymentLinkId
       );
-
-      const isPaid = paymentInfo.status === "PAID";
-      const isCancelled = paymentInfo.status === "CANCELLED";
-
+      console.log("xxxxxx", paymentInfo);
       return {
-        status: isPaid ? "authorized" : isCancelled ? "canceled" : "pending",
+        status: paymentInfo?.status === "PAID" ? "captured" : "pending",
         data: {
-          paymentLinkId: paymentInfo.id,
-          orderCode: paymentInfo.orderCode,
-          amount: paymentInfo.amount,
-          amountPaid: paymentInfo.amountPaid,
-          amountRemaining: paymentInfo.amountRemaining,
-          status: paymentInfo.status,
-          transactions: paymentInfo.transactions,
+          paymentLinkId: paymentInfo?.id,
+          orderCode: paymentInfo?.orderCode,
+          amount: paymentInfo?.amount,
+          amountPaid: paymentInfo?.amountPaid,
+          amountRemaining: paymentInfo?.amountRemaining,
+          status: paymentInfo?.status,
+          transactions: paymentInfo?.transactions,
           createdAt: paymentInfo.createdAt,
           cancellationReason: paymentInfo.cancellationReason,
           canceledAt: paymentInfo.canceledAt,
         },
       };
     } catch (error) {
+      console.log("🚀 ~ PayOSProviderService ~ error:", error);
       this.logger_.error("PayOS authorize payment error:", error);
       throw new Error(`Failed to authorize PayOS payment: ${error.message}`);
     }
@@ -158,10 +150,28 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     input: CapturePaymentInput
   ): Promise<CapturePaymentOutput> {
     try {
+      console.log("capturePayment>>>", input);
+
+      // capturePayment >>>
+      //   {
+      //     data: {
+      //       amount: 6000,
+      //       status: "PAID",
+      //       createdAt: "2025-06-21T00:21:27+07:00",
+      //       orderCode: 613058262588,
+      //       amountPaid: 6000,
+      //       canceledAt: null,
+      //       transactions: [[Object]],
+      //       paymentLinkId: "ed775fdbf6ef4dfda828f69f68d24156",
+      //       amountRemaining: 0,
+      //       cancellationReason: null,
+      //     },
+      //     context: { idempotency_key: "capt_01JY75XRYH9SQRH5NCVM4DJ3XP" },
+      //   };
       // PayOS automatically captures payments when they are paid
       // We just need to verify the payment status
       // @ts-ignore
-      const paymentLinkId = input.data?.data?.paymentLinkId as string;
+      const paymentLinkId = input?.data?.paymentLinkId as string;
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
       }
@@ -193,6 +203,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
 
   async cancelPayment(input: CancelPaymentInput): Promise<CancelPaymentOutput> {
     try {
+      console.log("cancelPayment>>>");
       // @ts-ignore
       const paymentLinkId = input.data?.data?.paymentLinkId as string;
       if (!paymentLinkId) {
@@ -224,7 +235,8 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     // PayOS doesn't support deleting payments, only cancelling
     // We'll treat delete as cancel
     try {
-      const paymentLinkId = input.data?.id as string;
+      console.log("deletePayment>>>", input);
+      const paymentLinkId = input.data?.paymentLinkId as string;
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
       }
@@ -234,6 +246,8 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
         paymentLinkId,
         cancellationReason
       );
+
+      console.log("cancelledPayment", cancelledPayment);
 
       return {
         data: {
@@ -251,6 +265,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
   }
 
   async refundPayment(input: RefundPaymentInput): Promise<RefundPaymentOutput> {
+    console.log("refundPayment>>>");
     // PayOS doesn't support automatic refunds via API
     // Refunds need to be processed manually through PayOS dashboard
     this.logger_.warn("PayOS refund requested - manual processing required");
@@ -264,6 +279,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     input: RetrievePaymentInput
   ): Promise<RetrievePaymentOutput> {
     try {
+      console.log("retrievePayment>>>");
       const paymentLinkId = input.data?.id as string;
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
@@ -294,6 +310,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
   }
 
   async updatePayment(input: UpdatePaymentInput): Promise<UpdatePaymentOutput> {
+    console.log("updatePayment>>>");
     // PayOS doesn't support updating payments after creation
     this.logger_.warn("PayOS update payment requested - not supported");
 
@@ -304,6 +321,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     input: GetPaymentStatusInput
   ): Promise<GetPaymentStatusOutput> {
     try {
+      console.log("getPaymentStatus>>>");
       const paymentLinkId = input.data?.id as string;
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
@@ -312,6 +330,8 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
       const paymentInfo = await this.payOS_.getPaymentLinkInformation(
         paymentLinkId
       );
+
+      console.log("paymentInfo->>getPaymentStatus", paymentInfo);
 
       let status: GetPaymentStatusOutput["status"];
 
@@ -345,48 +365,67 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     }
   }
 
-  async getWebhookActionAndData(
-    data: ProviderWebhookPayload["payload"]
-  ): Promise<WebhookActionResult> {
-    return { action: "not_supported" };
-    // try {
-    //   // Verify webhook data using PayOS SDK
-    //   const webhookData = this.payOS_.verifyPaymentWebhookData(data.data);
+  async getWebhookActionAndData(data: any): Promise<WebhookActionResult> {
+    try {
+      console.log("getWebhookActionAndData>>>", data);
 
-    //   let action: "authorized" | "captured" | "failed" | "canceled";
+      const result = await this.manager
+        .getConnection("read")
+        .execute(
+          `SELECT id FROM payment_session WHERE data->>'paymentLinkId' = ?`,
+          ["727f25d1561a4ed5a50c6ad315d2123a"]
+        );
 
-    //   // Map PayOS webhook codes to MedusaJS actions
-    //   switch (webhookData.code) {
-    //     case "00": // Success
-    //       action = "captured";
-    //       break;
-    //     case "01": // Failed
-    //       action = "failed";
-    //       break;
-    //     case "02": // Cancelled
-    //       action = "canceled";
-    //       break;
-    //     default:
-    //       action = "failed";
-    //   }
+      console.log("result", result);
 
-    //   return {
-    //     action,
-    //     data: {
-    //       session_id: webhookData.paymentLinkId,
-    //       amount: webhookData.amount,
-    //       orderCode: webhookData.orderCode,
-    //       reference: webhookData.reference,
-    //       transactionDateTime: webhookData.transactionDateTime,
-    //       description: webhookData.description,
-    //       code: webhookData.code,
-    //       desc: webhookData.desc,
-    //     },
-    //   };
-    // } catch (error) {
-    //   this.logger_.error("PayOS webhook verification error:", error);
-    //   throw new Error(`Failed to verify PayOS webhook: ${error.message}`);
-    // }
+      return {
+        action: "captured",
+        data: {
+          session_id: "payses_01JY75R3YFYD4Y6DCZRQ9RR3HR",
+          amount: 5000,
+        },
+      };
+
+      const webhookData = data.data as any;
+
+      let action:
+        | "authorized"
+        | "captured"
+        | "failed"
+        | "canceled"
+        | "requires_more"
+        | "not_supported";
+
+      // Map PayOS webhook status to MedusaJS actions
+      switch (webhookData.code) {
+        case "00":
+          action = "captured";
+          break;
+        case "CANCELLED":
+          action = "canceled";
+          break;
+        case "PENDING":
+          action = "requires_more";
+          break;
+        case "FAILED":
+          action = "failed";
+          break;
+        default:
+          action = "not_supported";
+      }
+
+      // Return only the required fields
+      return {
+        action,
+        data: {
+          session_id: webhookData?.data?.paymentLinkId,
+          amount: webhookData?.data?.amount,
+        },
+      };
+    } catch (error) {
+      this.logger_.error("PayOS webhook processing error:", error);
+      throw new Error(`Failed to process PayOS webhook: ${error.message}`);
+    }
   }
 }
 

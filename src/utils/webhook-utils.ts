@@ -3,6 +3,8 @@ const WEBHOOK_SECRET = process.env.MEDUSA_WEBHOOK_SECRET;
 
 export async function sendWebhook(event: string, data: any) {
   try {
+    console.log("WEBHOOK_URL>", WEBHOOK_URL);
+
     const payload = {
       event,
       data,
