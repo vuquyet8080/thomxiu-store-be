@@ -16,15 +16,14 @@ import {
   RefundPaymentOutput,
   RetrievePaymentInput,
   RetrievePaymentOutput,
-  StoreCartResponse,
   UpdatePaymentInput,
   UpdatePaymentOutput,
   WebhookActionResult,
 } from "@medusajs/framework/types";
 import { AbstractPaymentProvider } from "@medusajs/framework/utils";
+import { EntityManager } from "@mikro-orm/core";
 import PayOS from "@payos/node";
 import { getSmallestUnit } from "../../utils";
-import { EntityManager } from "@mikro-orm/core";
 
 type InjectedDependencies = {
   logger: Logger;
@@ -53,7 +52,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     super(container, options);
 
     this.logger_ = container.logger;
-
+    this.manager = container.manager; // Initialize the manager
     this.options_ = options;
 
     this.payOS_ = new PayOS(
@@ -123,7 +122,6 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
       const paymentInfo = await this.payOS_.getPaymentLinkInformation(
         paymentLinkId
       );
-      console.log("xxxxxx", paymentInfo);
       return {
         status: paymentInfo?.status === "PAID" ? "captured" : "pending",
         data: {
@@ -152,25 +150,6 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     try {
       console.log("capturePayment>>>", input);
 
-      // capturePayment >>>
-      //   {
-      //     data: {
-      //       amount: 6000,
-      //       status: "PAID",
-      //       createdAt: "2025-06-21T00:21:27+07:00",
-      //       orderCode: 613058262588,
-      //       amountPaid: 6000,
-      //       canceledAt: null,
-      //       transactions: [[Object]],
-      //       paymentLinkId: "ed775fdbf6ef4dfda828f69f68d24156",
-      //       amountRemaining: 0,
-      //       cancellationReason: null,
-      //     },
-      //     context: { idempotency_key: "capt_01JY75XRYH9SQRH5NCVM4DJ3XP" },
-      //   };
-      // PayOS automatically captures payments when they are paid
-      // We just need to verify the payment status
-      // @ts-ignore
       const paymentLinkId = input?.data?.paymentLinkId as string;
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
@@ -246,8 +225,6 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
         paymentLinkId,
         cancellationReason
       );
-
-      console.log("cancelledPayment", cancelledPayment);
 
       return {
         data: {
@@ -336,7 +313,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
       let status: GetPaymentStatusOutput["status"];
 
       switch (paymentInfo.status) {
-        case "PAID":
+        case "00":
           status = "captured";
           break;
         case "CANCELLED":
@@ -367,59 +344,54 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
 
   async getWebhookActionAndData(data: any): Promise<WebhookActionResult> {
     try {
-      console.log("getWebhookActionAndData>>>", data);
+      console.log("323223", data);
 
-      const result = await this.manager
+      const paymentLinkId = data?.data?.data?.paymentLinkId;
+      console.log(
+        "🚀 ~ PayOSProviderService ~ getWebhookActionAndData ~ paymentLinkId:",
+        paymentLinkId
+      );
+      if (!paymentLinkId) {
+        throw new Error("PaymentLinkId is missing in webhook data");
+      }
+
+      const [paymentSession] = await this.manager
         .getConnection("read")
         .execute(
           `SELECT id FROM payment_session WHERE data->>'paymentLinkId' = ?`,
-          ["727f25d1561a4ed5a50c6ad315d2123a"]
+          [paymentLinkId]
         );
 
-      console.log("result", result);
+      console.log(
+        "🚀 ~ PayOSProviderService ~ getWebhookActionAndData ~ paymentSession:",
+        paymentSession
+      );
 
-      return {
-        action: "captured",
-        data: {
-          session_id: "payses_01JY75R3YFYD4Y6DCZRQ9RR3HR",
-          amount: 5000,
-        },
-      };
-
-      const webhookData = data.data as any;
-
-      let action:
-        | "authorized"
-        | "captured"
-        | "failed"
-        | "canceled"
-        | "requires_more"
-        | "not_supported";
-
-      // Map PayOS webhook status to MedusaJS actions
-      switch (webhookData.code) {
-        case "00":
-          action = "captured";
-          break;
-        case "CANCELLED":
-          action = "canceled";
-          break;
-        case "PENDING":
-          action = "requires_more";
-          break;
-        case "FAILED":
-          action = "failed";
-          break;
-        default:
-          action = "not_supported";
+      if (!paymentSession) {
+        throw new Error(
+          `No payment session found for paymentLinkId: ${paymentLinkId}`
+        );
       }
 
-      // Return only the required fields
+      // Map PayOS webhook status to action
+      let action = "not_supported" as any;
+
+      if (data?.data?.data?.code === "00") {
+        action = "captured";
+      }
+
+      console.log("full data", {
+        action,
+        data: {
+          session_id: paymentSession.id,
+          amount: data?.data?.data?.amount,
+        },
+      });
       return {
         action,
         data: {
-          session_id: webhookData?.data?.paymentLinkId,
-          amount: webhookData?.data?.amount,
+          session_id: paymentSession.id,
+          amount: data?.data?.data?.amount,
         },
       };
     } catch (error) {
