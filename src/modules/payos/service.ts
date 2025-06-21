@@ -165,19 +165,28 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
 
       console.log("paymentInfo -->>capturePayment", paymentInfo);
 
+      console.log("paymentInfo->>> status", paymentInfo.status);
+
       if (paymentInfo.status !== "PAID") {
+        console.log("throw -<<>>");
         throw new Error(
           `Payment not ready for capture. Status: ${paymentInfo.status}`
         );
       }
-
+      console.log(">>> data capture", {
+        paymentLinkId: paymentInfo?.id,
+        orderCode: paymentInfo?.orderCode,
+        amount: paymentInfo?.amountPaid,
+        status: paymentInfo?.status,
+        transactions: paymentInfo?.transactions,
+      });
       return {
         data: {
-          paymentLinkId: paymentInfo.id,
-          orderCode: paymentInfo.orderCode,
-          amount: paymentInfo.amountPaid,
-          status: paymentInfo.status,
-          transactions: paymentInfo.transactions,
+          paymentLinkId: paymentInfo?.id,
+          orderCode: paymentInfo?.orderCode,
+          amount: paymentInfo?.amountPaid,
+          status: paymentInfo?.status,
+          transactions: paymentInfo?.transactions,
         },
       };
     } catch (error) {
