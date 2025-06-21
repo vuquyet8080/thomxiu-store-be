@@ -88,6 +88,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
         requestData as any
       );
 
+      console.log("paymentLinkData->>", paymentLinkData);
       return {
         id: data?.session_id as string,
         data: {
@@ -122,6 +123,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
       const paymentInfo = await this.payOS_.getPaymentLinkInformation(
         paymentLinkId
       );
+      console.log("paymentInfo->>>authorizePayment", paymentInfo);
       return {
         status: paymentInfo?.status === "PAID" ? "captured" : "pending",
         data: {
@@ -151,6 +153,8 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
       console.log("capturePayment>>>", input);
 
       const paymentLinkId = input?.data?.paymentLinkId as string;
+
+      console.log("paymentLinkId ->>> capturePayment", paymentLinkId);
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
       }
@@ -158,6 +162,8 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
       const paymentInfo = await this.payOS_.getPaymentLinkInformation(
         paymentLinkId
       );
+
+      console.log("paymentInfo -->>capturePayment", paymentInfo);
 
       if (paymentInfo.status !== "PAID") {
         throw new Error(
@@ -182,9 +188,11 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
 
   async cancelPayment(input: CancelPaymentInput): Promise<CancelPaymentOutput> {
     try {
-      console.log("cancelPayment>>>");
       // @ts-ignore
       const paymentLinkId = input.data?.data?.paymentLinkId as string;
+
+      console.log("cancelPayment>>>", paymentLinkId);
+
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
       }
@@ -256,7 +264,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
     input: RetrievePaymentInput
   ): Promise<RetrievePaymentOutput> {
     try {
-      console.log("retrievePayment>>>");
+      console.log("retrievePayment>>>", input);
       const paymentLinkId = input.data?.id as string;
       if (!paymentLinkId) {
         throw new Error("PaymentLinkId is required");
@@ -344,7 +352,7 @@ class PayOSProviderService extends AbstractPaymentProvider<PayOSOptions> {
 
   async getWebhookActionAndData(data: any): Promise<WebhookActionResult> {
     try {
-      console.log("323223", data);
+      console.log("getWebhookActionAndData>>>>", data);
 
       const paymentLinkId = data?.data?.data?.paymentLinkId;
       console.log(
