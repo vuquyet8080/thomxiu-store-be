@@ -56,5 +56,30 @@ module.exports = defineConfig({
         ],
       },
     },
+    {
+      resolve: "@medusajs/medusa/payment",
+      options: {
+        providers: [
+          {
+            resolve: "./src/modules/payos",
+            id: "payos",
+            options: {
+              clientId: process.env.PAYOS_CLIENT_ID,
+              apiKey: process.env.PAYOS_API_KEY,
+              checksumKey: process.env.PAYOS_CHECKSUM_KEY,
+              returnUrl: process.env.PAYOS_RETURN_URL || "",
+              cancelUrl: process.env.PAYOS_CANCEL_URL || "",
+            },
+          },
+        ],
+      },
+    },
+    {
+      resolve: "@medusajs/event-bus-redis",
+      key: "event_bus",
+      options: {
+        redisUrl: process.env.REDIS_URL,
+      },
+    },
   ],
 });
