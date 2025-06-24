@@ -23,7 +23,7 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "migrate": "npx medusa db:migrate && yarn seed",
     "create-account": "npx medusa user --email admin@gmail.com --password Password1234@",
-    "create-account1": "npx medusa user --email admin@gmail.com --password Password1234@",
+    "create-account1": "npx medusa user --email thomxiuxiu@gmail.com --password Password1234@",
     "build:admin": "MEDUSA_ADMIN_DISABLE=true MEDUSA_BACKEND_URL=https://admin.thomxiu.vn medusa build --admin-only",
     "serve:admin": "npx serve .medusa/admin -l 5173 --single"
   },
